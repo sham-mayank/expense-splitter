@@ -1,8 +1,10 @@
 package com.expensesplitter.expense_splitter.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "expenses")
@@ -12,69 +14,51 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Many expenses belong to one group
-    @ManyToOne
-    @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
-
-    // Who paid the expense
-    @ManyToOne
-    @JoinColumn(name = "paid_by", nullable = false)
-    private User paidBy;
-
-    @Column(name = "total_amount", nullable = false)
-    private BigDecimal totalAmount;
-
     @Column(nullable = false)
     private String description;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(nullable = false)
+    private BigDecimal totalAmount;
+
+    // Who paid the expense
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "paid_by_user_id", nullable = false)
+    private User paidBy;
+
+    // Expense belongs to a group
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
+    @JsonIgnore   // prevent infinite recursion
+    private Group group;
+
+    // One expense has many splits
+    @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExpenseSplit> splits;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    // Required by JPA
     public Expense() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // Getters & Setters
+    public Long getId() { return id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public Group getGroup() {
-        return group;
-    }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
-    public void setGroup(Group group) {
-        this.group = group;
-    }
+    public User getPaidBy() { return paidBy; }
+    public void setPaidBy(User paidBy) { this.paidBy = paidBy; }
 
-    public User getPaidBy() {
-        return paidBy;
-    }
+    public Group getGroup() { return group; }
+    public void setGroup(Group group) { this.group = group; }
 
-    public void setPaidBy(User paidBy) {
-        this.paidBy = paidBy;
-    }
+    public List<ExpenseSplit> getSplits() { return splits; }
+    public void setSplits(List<ExpenseSplit> splits) { this.splits = splits; }
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }
